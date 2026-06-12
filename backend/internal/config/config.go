@@ -6,11 +6,12 @@ import (
 )
 
 type Config struct {
-	DatabaseURL string
-	RedisURL    string
-	JWTSecret   string
-	Port        string
-	CORSOrigins []string
+	DatabaseURL    string
+	RedisURL       string
+	JWTSecret      string
+	Port           string
+	CORSOrigins    []string
+	UnlimitedPacks bool // dev/testing: no cooldown, endless packs
 }
 
 func Load() Config {
@@ -19,7 +20,8 @@ func Load() Config {
 		RedisURL:    getenv("REDIS_URL", "redis://localhost:6379"),
 		JWTSecret:   getenv("JWT_SECRET", "changeme"),
 		Port:        getenv("PORT", "8080"),
-		CORSOrigins: strings.Split(getenv("CORS_ORIGINS", "http://localhost:5173"), ","),
+		CORSOrigins:    strings.Split(getenv("CORS_ORIGINS", "http://localhost:5173"), ","),
+		UnlimitedPacks: getenv("UNLIMITED_PACKS", "") == "true" || getenv("UNLIMITED_PACKS", "") == "1",
 	}
 }
 

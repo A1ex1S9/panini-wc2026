@@ -30,7 +30,7 @@ func main() {
 
 	authH := &auth.Handler{DB: gdb, JWTSecret: cfg.JWTSecret}
 	albumH := &album.Handler{DB: gdb}
-	packsH := &packs.Handler{DB: gdb, Redis: rdb}
+	packsH := &packs.Handler{DB: gdb, Redis: rdb, Unlimited: cfg.UnlimitedPacks}
 	tradesH := &trades.Handler{DB: gdb, Redis: rdb}
 
 	r := gin.New()

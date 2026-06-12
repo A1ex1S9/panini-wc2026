@@ -24,9 +24,12 @@ const (
 )
 
 type Handler struct {
-	DB    *gorm.DB
-	Redis *redis.Client
+	DB        *gorm.DB
+	Redis     *redis.Client
+	Unlimited bool // dev/testing mode: endless packs, no cooldown
 }
+
+const unlimitedDisplay = 9999
 
 func cooldownKey(userID uuid.UUID) string {
 	return fmt.Sprintf("pack_cooldown:%s", userID)
@@ -46,6 +49,10 @@ func (h *Handler) state(ctx context.Context, userID uuid.UUID) (packsState, erro
 		PacksAvailable:   PacksPerCycle,
 		StickersPerPack:  StickersPerPack,
 		PacksPerCooldown: PacksPerCycle,
+	}
+	if h.Unlimited {
+		s.PacksAvailable = unlimitedDisplay
+		return s, nil
 	}
 	val, err := h.Redis.Get(ctx, cooldownKey(userID)).Int()
 	if err == redis.Nil {
@@ -133,11 +140,14 @@ func (h *Handler) Open(c *gin.Context) {
 	}
 
 	// Decrement the cycle counter; the key carries the 24h cooldown TTL.
-	remaining := s.PacksAvailable - 1
-	if err := h.Redis.Set(ctx, cooldownKey(userID), remaining,
-		time.Duration(CooldownSeconds)*time.Second).Err(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "cache failure"})
-		return
+	remaining := s.PacksAvailable
+	if !h.Unlimited {
+		remaining = s.PacksAvailable - 1
+		if err := h.Redis.Set(ctx, cooldownKey(userID), remaining,
+			time.Duration(CooldownSeconds)*time.Second).Err(); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "cache failure"})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{

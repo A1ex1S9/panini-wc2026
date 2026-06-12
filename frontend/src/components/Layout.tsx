@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../store/auth'
 import { api } from '../api/client'
-import { Wc26Logo } from './branding/Wc26Logo'
+import { Wc26Stack } from './branding/Wc26Logo'
 
 const navItems = [
   { to: '/album', label: 'Альбом' },
@@ -36,7 +36,7 @@ export function Layout() {
       <header className="sticky top-0 z-40 bg-panini-navy text-white shadow-lg">
         <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-2">
           <Link to="/" className="flex items-center gap-2">
-            <Wc26Logo className="text-2xl text-white" />
+            <Wc26Stack className="text-xl" trophy={false} />
             <span className="hidden font-display text-sm font-black uppercase leading-tight sm:block">
               FIFA World Cup 2026™<br />
               <span className="text-[10px] font-bold text-white/60">Virtual Sticker Album</span>

@@ -1,53 +1,49 @@
-import { GeoBackground } from '../branding/GeoBackground'
-import { Wc26Logo, PaniniLogo } from '../branding/Wc26Logo'
+import { Mosaic } from '../branding/Mosaic'
+import { Wc26Lockup, Wc26Stack, PaniniLogo } from '../branding/Wc26Logo'
 
-// Replica of the official WC2026 foil sticker pack: silver sealed edges,
-// colourful geometric body, big "26" + trophy in the centre.
+// Foil sticker pack: silver crimped wrapper, colourful mosaic panel,
+// stacked 26 + gold trophy lockup in the centre.
 export function PackVisual({ className = '' }: { className?: string }) {
   return (
-    <div
-      className={`relative aspect-[3/4] overflow-hidden rounded-md shadow-xl ring-1 ring-black/30 ${className}`}
-    >
-      <GeoBackground />
-      {/* metallic sealed edges */}
-      <div className="foil absolute inset-x-0 top-0 z-10 h-[9%] border-b border-black/10 [mask-image:linear-gradient(to_bottom,black_70%,black)]">
-        <div className="h-full w-full bg-[repeating-linear-gradient(90deg,transparent_0,transparent_6px,rgba(0,0,0,0.07)_6px,rgba(0,0,0,0.07)_8px)]" />
-      </div>
-      <div className="foil absolute inset-x-0 bottom-0 z-10 h-[9%] border-t border-black/10">
-        <div className="h-full w-full bg-[repeating-linear-gradient(90deg,transparent_0,transparent_6px,rgba(0,0,0,0.07)_6px,rgba(0,0,0,0.07)_8px)]" />
-      </div>
+    <div className={`foil relative aspect-[4/5] overflow-hidden rounded-sm shadow-xl ring-1 ring-black/30 ${className}`}>
+      {/* crimped seal edges */}
+      <div className="absolute inset-x-0 top-0 z-20 h-[4%] bg-[repeating-linear-gradient(90deg,rgba(0,0,0,0.13)_0_3px,transparent_3px_7px)]" />
+      <div className="absolute inset-x-0 bottom-0 z-20 h-[4%] bg-[repeating-linear-gradient(90deg,rgba(0,0,0,0.13)_0_3px,transparent_3px_7px)]" />
+      <div className="absolute left-0 top-0 z-20 h-full w-[2%] bg-black/10" />
+      <div className="absolute right-0 top-0 z-20 h-full w-[2%] bg-black/10" />
 
-      {/* centre lockup */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <Wc26Logo className="text-[5.5rem] text-panini-navy drop-shadow" />
-        <div className="mt-1 text-center font-display text-[0.65rem] font-black uppercase tracking-wider text-panini-navy">
-          FIFA World Cup 2026™
+      {/* mosaic panel inset on the foil */}
+      <div className="absolute inset-[7%] overflow-hidden rounded-sm">
+        <Mosaic seed={11} cols={7} rows={9} />
+        {/* centre lockup */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Wc26Lockup className="text-[1.1rem] drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]" />
         </div>
-      </div>
-
-      {/* bottom badges */}
-      <div className="absolute bottom-[11%] left-2 z-10 rounded-sm bg-panini-navy px-1.5 py-0.5 font-display text-[0.6rem] font-black uppercase text-white">
-        5 stickers
-      </div>
-      <div className="absolute bottom-[11%] right-2 z-10">
-        <PaniniLogo className="text-[0.6rem]" />
+        {/* bottom badges */}
+        <div className="absolute bottom-[3%] left-[4%] flex flex-col items-center">
+          <span className="rounded-md bg-white px-[0.6em] py-[0.05em] font-display text-[0.8rem] font-black text-slate-900 shadow">
+            5
+          </span>
+          <span className="mt-[2px] font-display text-[0.55rem] font-black uppercase tracking-wide text-white drop-shadow">
+            Stickers
+          </span>
+        </div>
+        <PaniniLogo className="absolute bottom-[3%] right-[4%] text-[0.7rem] rounded-sm" />
       </div>
 
       {/* foil sheen */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/0 via-white/25 to-white/0" />
+      <div className="pointer-events-none absolute inset-0 z-30 bg-gradient-to-tr from-white/0 via-white/30 to-white/0" />
     </div>
   )
 }
 
-// Dark blue card back with the WC26 watermark, shown before each flip.
+// Dark navy card back with the tournament mark, pre-flip.
 export function CardBack({ className = '' }: { className?: string }) {
   return (
-    <div
-      className={`relative flex h-full w-full items-center justify-center overflow-hidden rounded-md bg-panini-navy ring-1 ring-black/30 ${className}`}
-    >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.12),transparent_60%)]" />
-      <Wc26Logo className="text-6xl text-white/20" />
-      <div className="absolute bottom-2 inset-x-0 text-center font-display text-[8px] font-black uppercase tracking-widest text-white/30">
+    <div className={`relative flex h-full w-full items-center justify-center overflow-hidden rounded-[4px] bg-panini-navy ring-1 ring-black/30 ${className}`}>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.14),transparent_60%)]" />
+      <Wc26Stack className="text-6xl opacity-90" />
+      <div className="absolute inset-x-0 bottom-2 text-center font-display text-[8px] font-black uppercase tracking-widest text-white/40">
         FIFA World Cup 2026™
       </div>
     </div>

@@ -88,13 +88,8 @@ export default function Packs() {
 
   const allFlipped = cards.length > 0 && flipped.size === cards.length
 
-  const stickAllNew = async () => {
-    const newOnes = cards.filter((c) => c.is_new)
-    await Promise.allSettled(newOnes.map((c) => api.stick(c.id)))
-    navigate('/album')
-  }
-
   const packs = status?.packs_available ?? 0
+  const unlimited = packs >= 9999
 
   return (
     <div className="flex flex-col items-center">
@@ -102,9 +97,11 @@ export default function Packs() {
         Пакетики
       </h1>
       <p className="mb-8 text-sm text-slate-500">
-        {packs > 0
-          ? `Осталось пакетиков: ${packs} · в каждом ${status?.stickers_per_pack ?? 5} наклеек`
-          : 'Пакетики закончились'}
+        {unlimited
+          ? `Пакетиков: ∞ (тестовый режим) · в каждом ${status?.stickers_per_pack ?? 5} наклеек`
+          : packs > 0
+            ? `Осталось пакетиков: ${packs} · в каждом ${status?.stickers_per_pack ?? 5} наклеек`
+            : 'Пакетики закончились'}
       </p>
 
       {phase !== 'revealing' && (
@@ -129,7 +126,7 @@ export default function Packs() {
               </div>
             ))}
             {phase === 'idle' && (
-              <div className="absolute -bottom-10 inset-x-0 text-center text-sm font-semibold text-slate-400">
+              <div className="absolute -bottom-20 inset-x-0 text-center text-sm font-semibold text-slate-400">
                 Нажми на пакетик, чтобы открыть
               </div>
             )}
@@ -185,21 +182,24 @@ export default function Packs() {
             {allFlipped ? 'Все наклейки открыты!' : 'Кликай по карточкам, чтобы перевернуть'}
           </p>
           {allFlipped && (
-            <div className="mt-4 flex gap-3">
-              {cards.some((c) => c.is_new) && (
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <p className="text-sm font-semibold text-slate-500">
+                Наклейки добавлены в инвентарь — клей их сам в альбоме!
+              </p>
+              <div className="flex gap-3">
                 <button
-                  onClick={stickAllNew}
+                  onClick={() => navigate('/album')}
                   className="rounded-lg bg-panini-teal px-5 py-2.5 font-bold text-white shadow hover:brightness-110"
                 >
-                  Наклеить новые ({cards.filter((c) => c.is_new).length})
+                  Клеить в альбом →
                 </button>
-              )}
-              <button
-                onClick={() => { setPhase('idle'); setCards([]) }}
-                className="rounded-lg bg-slate-200 px-5 py-2.5 font-bold text-slate-700 hover:bg-slate-300"
-              >
-                В инвентарь
-              </button>
+                <button
+                  onClick={() => { setPhase('idle'); setCards([]) }}
+                  className="rounded-lg bg-panini-coral px-5 py-2.5 font-bold text-white shadow hover:brightness-110"
+                >
+                  Ещё пакетик!
+                </button>
+              </div>
             </div>
           )}
         </>

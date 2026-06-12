@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import type { AlbumSticker } from '../types'
-import { TeamSpread } from '../components/AlbumPage/TeamSpread'
+import { TeamSpread, slotDomId } from '../components/AlbumPage/TeamSpread'
 import { StickerCard } from '../components/StickerCard/StickerCard'
 import { Flag } from '../components/branding/Flag'
 
@@ -43,6 +44,8 @@ export default function Album() {
   const [stickers, setStickers] = useState<AlbumSticker[]>([])
   const [loading, setLoading] = useState(true)
   const [justStuckId, setJustStuckId] = useState<string | null>(null)
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [highlightId, setHighlightId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -58,6 +61,12 @@ export default function Album() {
   const { specials, teams } = useMemo(() => groupByTeam(stickers), [stickers])
   const totalStuck = stickers.filter((s) => s.stuck_in_album).length
 
+  // cards in hand: owned but not yet stuck, sorted by album order
+  const hand = useMemo(
+    () => stickers.filter((s) => s.quantity > 0 && !s.stuck_in_album),
+    [stickers],
+  )
+
   const stick = async (s: AlbumSticker) => {
     try {
       await api.stick(s.id)
@@ -67,7 +76,19 @@ export default function Album() {
       setTimeout(() => setJustStuckId(null), 800)
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Не получилось наклеить')
+    } finally {
+      setDraggingId(null)
+      setHighlightId(null)
     }
+  }
+
+  // click a card in hand → scroll to its slot and flash it
+  const locateSlot = (s: AlbumSticker) => {
+    setHighlightId(s.id)
+    document.getElementById(slotDomId(s))?.scrollIntoView({
+      behavior: 'smooth', block: 'center',
+    })
+    setTimeout(() => setHighlightId((cur) => (cur === s.id ? null : cur)), 2500)
   }
 
   if (loading) {
@@ -75,39 +96,85 @@ export default function Album() {
   }
 
   return (
-    <div className="flex gap-6">
-      {/* sidebar: team list with completion */}
-      <aside className="sticky top-16 hidden max-h-[calc(100vh-5rem)] w-56 shrink-0 overflow-y-auto rounded-xl bg-white p-3 shadow lg:block">
-        <div className="mb-2 px-2 font-display text-sm font-black uppercase text-panini-navy">
-          Альбом · {totalStuck}/{stickers.length}
+    <div className="flex gap-5">
+      {/* left panel: my cards waiting to be stuck */}
+      <aside className="sticky top-16 hidden max-h-[calc(100vh-5rem)] w-[210px] shrink-0 flex-col rounded-xl bg-white p-3 shadow md:flex">
+        <div className="mb-1 px-1 font-display text-sm font-black uppercase text-panini-navy">
+          Мои наклейки
         </div>
-        <a
-          href="#specials"
-          className="block rounded px-2 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"
-        >
-          ⭐ Специальные
-        </a>
-        {teams.map((t) => (
-          <a
-            key={t.team}
-            href={`#team-${t.team.replace(/\s+/g, '-')}`}
-            className="flex items-center gap-2 rounded px-2 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"
-          >
-            <Flag code={t.code} className="h-3.5 w-5" />
-            <span className="truncate">{t.team}</span>
-            <span
-              className={`ml-auto text-xs font-bold ${
-                t.stuck === t.stickers.length ? 'text-emerald-500' : 'text-slate-400'
-              }`}
-            >
-              {t.stuck}/{t.stickers.length}
-            </span>
-          </a>
-        ))}
+        <p className="mb-2 px-1 text-[11px] leading-snug text-slate-400">
+          Перетащи карточку на её место в альбоме — слот подсветится. Клик —
+          показать место.
+        </p>
+        {hand.length === 0 ? (
+          <p className="rounded-lg bg-slate-50 p-3 text-xs text-slate-400">
+            Всё наклеено!{' '}
+            <Link to="/packs" className="font-bold text-panini-blue hover:underline">
+              Открой пакетик →
+            </Link>
+          </p>
+        ) : (
+          <div className="grid flex-1 grid-cols-2 content-start gap-2 overflow-y-auto pr-1">
+            {hand.map((s) => (
+              <div key={s.id} className="relative">
+                <StickerCard
+                  sticker={s}
+                  size="mini"
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('text/plain', s.id)
+                    e.dataTransfer.effectAllowed = 'move'
+                    setDraggingId(s.id)
+                    setHighlightId(s.id)
+                    document.getElementById(slotDomId(s))?.scrollIntoView({
+                      behavior: 'smooth', block: 'center',
+                    })
+                  }}
+                  onDragEnd={() => { setDraggingId(null); setHighlightId(null) }}
+                  onClick={() => locateSlot(s)}
+                  className={draggingId === s.id ? 'opacity-40' : ''}
+                />
+                {s.quantity > 1 && (
+                  <span className="absolute -right-1 -top-1 z-10 rounded-full bg-red-600 px-1.5 text-[10px] font-black text-white shadow">
+                    ×{s.quantity}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="mt-2 border-t border-slate-100 pt-2 text-center text-[11px] font-semibold text-slate-400">
+          В руке: {hand.length} · Наклеено: {totalStuck}/{stickers.length}
+        </div>
       </aside>
 
       {/* album spreads */}
       <div className="min-w-0 flex-1 space-y-8">
+        {/* team navigator */}
+        <nav className="flex flex-wrap gap-1.5 rounded-xl bg-white p-3 shadow">
+          <a
+            href="#specials"
+            className="flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 hover:bg-slate-200"
+          >
+            ⭐ Специальные
+          </a>
+          {teams.map((t) => (
+            <a
+              key={t.team}
+              href={`#team-${t.team.replace(/\s+/g, '-')}`}
+              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold hover:brightness-95 ${
+                t.stuck === t.stickers.length
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              <Flag code={t.code} className="h-3 w-4.5" />
+              {t.team}
+              <span className="opacity-60">{t.stuck}/{t.stickers.length}</span>
+            </a>
+          ))}
+        </nav>
+
         <section id="specials" className="scroll-mt-20">
           <div className="flex items-center gap-3 rounded-t-xl bg-panini-navy px-4 py-2.5 text-white">
             <h2 className="font-display text-lg font-black uppercase tracking-wide">
@@ -119,21 +186,33 @@ export default function Album() {
           </div>
           <div className="rounded-b-xl bg-white p-4 shadow">
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
-              {specials.map((s) =>
-                s.stuck_in_album ? (
-                  <StickerCard
-                    key={s.id}
-                    sticker={s}
-                    size="mini"
-                    className={justStuckId === s.id ? 'fly-to-slot' : ''}
-                  />
+              {specials.map((s) => {
+                const isDropTarget = draggingId === s.id
+                const isFlashing = highlightId === s.id
+                return s.stuck_in_album ? (
+                  <div key={s.id} id={slotDomId(s)}>
+                    <StickerCard
+                      sticker={s}
+                      size="mini"
+                      className={justStuckId === s.id ? 'fly-to-slot' : ''}
+                    />
+                  </div>
                 ) : (
                   <div
                     key={s.id}
+                    id={slotDomId(s)}
                     onClick={() => s.quantity > 0 && stick(s)}
-                    className={`relative flex h-[110px] w-[80px] flex-col items-center justify-center rounded-md border-2 border-dashed border-panini-gold bg-white/40 ${
-                      s.quantity > 0 ? 'cursor-pointer hover:bg-amber-50' : ''
-                    }`}
+                    onDragOver={(e) => { if (isDropTarget) e.preventDefault() }}
+                    onDrop={(e) => {
+                      if (!isDropTarget) return
+                      e.preventDefault()
+                      stick(s)
+                    }}
+                    className={`relative flex h-[110px] w-[80px] flex-col items-center justify-center rounded-[4px] border-2 border-dashed transition ${
+                      isDropTarget || isFlashing
+                        ? 'animate-pulse border-emerald-400 bg-emerald-50 ring-4 ring-emerald-300/70'
+                        : 'border-panini-gold bg-white/40'
+                    } ${s.quantity > 0 ? 'cursor-pointer hover:bg-amber-50' : ''}`}
                   >
                     <span className="font-display text-lg font-black text-panini-gold">
                       {s.sticker_number}
@@ -141,14 +220,14 @@ export default function Album() {
                     <span className="px-1 text-center text-[9px] font-semibold text-slate-400">
                       {s.player_lastname}
                     </span>
-                    {s.quantity > 0 && (
+                    {isDropTarget && (
                       <span className="absolute bottom-1 rounded bg-emerald-500 px-1 text-[9px] font-black text-white">
-                        ЕСТЬ ✓
+                        СЮДА!
                       </span>
                     )}
                   </div>
-                ),
-              )}
+                )
+              })}
             </div>
           </div>
         </section>
@@ -163,6 +242,8 @@ export default function Album() {
             stickers={t.stickers}
             onStick={stick}
             justStuckId={justStuckId}
+            draggingId={draggingId}
+            highlightId={highlightId}
           />
         ))}
       </div>

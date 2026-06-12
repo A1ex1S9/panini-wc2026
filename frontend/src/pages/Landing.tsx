@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAuth } from '../store/auth'
 import type { UserRow } from '../types'
-import { GeoBackground } from '../components/branding/GeoBackground'
-import { Wc26Logo, PaniniLogo } from '../components/branding/Wc26Logo'
+import { Mosaic } from '../components/branding/Mosaic'
+import { Wc26Lockup, PaniniLogo } from '../components/branding/Wc26Logo'
 
 export default function Landing() {
   const token = useAuth((s) => s.token)
@@ -16,23 +16,19 @@ export default function Landing() {
 
   return (
     <div className="grid gap-8 md:grid-cols-2">
-      {/* Album cover replica */}
-      <div className="relative mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden rounded-r-xl rounded-l-sm shadow-2xl ring-1 ring-black/20">
-        <GeoBackground />
-        <div className="absolute inset-x-0 top-8 bg-panini-blue py-2 text-center font-display text-sm font-black uppercase tracking-widest text-white">
+      {/* Album cover, mosaic style */}
+      <div className="relative mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden rounded-r-lg rounded-l-sm shadow-2xl ring-1 ring-black/20">
+        <Mosaic seed={5} cols={8} rows={11} />
+        <div className="absolute inset-x-0 top-5 text-center font-display text-sm font-black uppercase tracking-[0.25em] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
           Official Sticker Collection
         </div>
         <div className="absolute inset-0 flex items-center justify-center">
-          <Wc26Logo className="text-[9rem] text-panini-navy drop-shadow-lg" />
+          <Wc26Lockup className="text-[2.6rem] drop-shadow-[0_4px_14px_rgba(0,0,0,0.5)]" />
         </div>
-        <div className="absolute bottom-6 left-5 text-panini-navy">
-          <div className="font-display text-xl font-black uppercase leading-none">
-            FIFA World Cup 2026™
-          </div>
-          <PaniniLogo className="mt-2 text-sm" />
-        </div>
-        {/* book spine highlight */}
-        <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-black/30 to-transparent" />
+        <PaniniLogo className="absolute bottom-5 left-5 rounded-sm text-base" />
+        {/* page block + book spine */}
+        <div className="absolute inset-y-0 right-0 w-1.5 bg-gradient-to-l from-white/50 to-transparent" />
+        <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-black/35 to-transparent" />
       </div>
 
       <div className="space-y-6">
