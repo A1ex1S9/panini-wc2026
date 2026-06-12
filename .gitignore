@@ -1,0 +1,20 @@
+# Go
+backend/bin/
+*.exe
+
+# Node
+node_modules/
+frontend/dist/
+
+# Env
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Scraper output cache
+scraper/.cache/
+__pycache__/
