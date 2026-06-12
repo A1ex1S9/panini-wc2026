@@ -24,6 +24,7 @@ type Sticker struct {
 	Team           string     `json:"team" gorm:"size:100"`
 	TeamColor      string     `json:"team_color" gorm:"size:7"`
 	GroupName      string     `json:"group_name" gorm:"size:10"`
+	TeamCode       string     `json:"team_code" gorm:"size:8"`
 	DOB            *time.Time `json:"dob" gorm:"column:dob;type:date"`
 	HeightCM       *int       `json:"height_cm" gorm:"column:height_cm"`
 	WeightKG       *int       `json:"weight_kg" gorm:"column:weight_kg"`
