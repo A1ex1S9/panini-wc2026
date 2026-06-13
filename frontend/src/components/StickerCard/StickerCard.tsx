@@ -1,3 +1,4 @@
+import type React from 'react'
 import type { Sticker } from '../../types'
 import { Flag } from '../branding/Flag'
 import { Wc26Mini, GoldTrophy, PaniniLogo } from '../branding/Wc26Logo'
@@ -139,7 +140,7 @@ export function StickerCard({
           ? 'ring-3 ring-yellow-400 shadow-[0_0_18px_rgba(255,200,40,0.65)]'
           : 'ring-1 ring-black/15 shadow-md'
       } ${className}`}
-      style={{ width: dims.w, height: dims.h, backgroundColor: MINT }}
+      style={{ width: dims.w, height: dims.h, backgroundColor: MINT, WebkitTouchCallout: 'none' } as React.CSSProperties}
     >
       {sticker.is_special ? (
         <SpecialFace sticker={sticker} dims={dims} />
@@ -181,7 +182,7 @@ export function StickerCard({
             className="absolute right-0 top-[30%] w-[15%] min-w-4"
           />
           <div
-            className="absolute right-0 top-[44%] flex flex-col items-center font-display font-black leading-[0.95]"
+            className="absolute right-[16%] top-[44%] flex flex-col items-center font-display font-black leading-[0.95]"
             style={{
               fontSize: dims.h * 0.075,
               color: 'transparent',
@@ -201,8 +202,10 @@ export function StickerCard({
                 src={sticker.photo_url}
                 alt={`${sticker.player_name} ${sticker.player_lastname}`}
                 loading="lazy"
+                draggable={false}
                 className="h-full w-full object-cover object-top"
-                style={{ filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.25))' }}
+                style={{ filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.25))', WebkitTouchCallout: 'none' } as React.CSSProperties}
+                onDragStart={(e) => e.preventDefault()}
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
               />
             ) : (
@@ -249,8 +252,10 @@ export function StickerCard({
                         src={sticker.club_logo_url}
                         alt=""
                         loading="eager"
+                        draggable={false}
                         className="shrink-0 object-contain"
                         style={{ height: '1em', width: '1em' }}
+                        onDragStart={(e) => e.preventDefault()}
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                       />
                     )}

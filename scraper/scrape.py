@@ -394,14 +394,7 @@ def main():
         for p in players:
             wiki_photo, qid = meta.get(p["wiki_title"], (None, None)) if p["wiki_title"] else (None, None)
             h, w, p18_photo = stats.get(qid, (None, None, None)) if qid else (None, None, None)
-            # Prefer P18 Wikidata portrait; fall back to Wikipedia pageimage
             photo = p18_photo or wiki_photo
-            # Last resort: search Wikipedia by full name if no photo found
-            if not photo and p["wiki_title"]:
-                full_name = f"{p['first']} {p['last']}"
-                photo = search_wiki_photo(full_name)
-                if photo:
-                    print(f"    found via search: {full_name}")
             stickers.append({
                 "sticker_number": num,
                 "player_name": p["first"], "player_lastname": p["last"],

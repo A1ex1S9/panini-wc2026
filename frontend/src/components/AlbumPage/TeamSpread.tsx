@@ -96,7 +96,7 @@ export function TeamSpread({
             ? 'animate-pulse border-emerald-400 bg-emerald-50 ring-4 ring-emerald-300/70'
             : 'bg-white/40'
         } ${(owned && !readonly) || isTapTarget ? 'cursor-pointer hover:bg-white/80' : ''} ${
-          large ? 'w-[100px] h-[138px] sm:w-[130px] sm:h-[179px] md:w-[160px] md:h-[220px]'
+          large ? 'w-[80px] h-[110px] sm:w-[100px] sm:h-[138px] md:w-[120px] md:h-[165px]'
                 : 'w-[60px] h-[82px] sm:w-[70px] sm:h-[96px] md:w-[80px] md:h-[110px]'
         }`}
         style={{ borderColor: isActive ? undefined : teamColor }}
@@ -142,7 +142,7 @@ export function TeamSpread({
               </span>
             </div>
           )}
-          <div className="grid flex-1 grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+          <div className="grid flex-1 grid-cols-3 gap-1.5 md:grid-cols-4 xl:grid-cols-5">
             {players.map((s) => slot(s))}
           </div>
         </div>
