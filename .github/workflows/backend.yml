@@ -1,4 +1,4 @@
-name: Deploy backend to Fly.io
+name: Deploy backend to Render
 
 on:
   push:
@@ -24,12 +24,7 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    concurrency: fly-deploy
     steps:
-      - uses: actions/checkout@v4
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-      - name: Deploy
-        working-directory: backend
-        run: flyctl deploy --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: Trigger Render deploy
+        run: |
+          curl -fsSL -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
