@@ -182,7 +182,7 @@ export function StickerCard({
             className="absolute right-0 top-[30%] w-[15%] min-w-4"
           />
           <div
-            className="absolute right-[16%] top-[44%] flex flex-col items-center font-display font-black leading-[0.95]"
+            className="absolute right-[1%] top-[44%] flex flex-col items-center font-display font-black leading-[0.95]"
             style={{
               fontSize: dims.h * 0.075,
               color: 'transparent',
