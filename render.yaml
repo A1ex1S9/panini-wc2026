@@ -18,7 +18,7 @@ services:
       - key: JWT_SECRET
         generateValue: true  # Render сгенерирует случайную строку
       - key: CORS_ORIGINS
-        value: https://A1ex1S9.github.io
+        value: https://a1ex1s9.github.io
 
 databases:
   - name: panini-wc2026-db
