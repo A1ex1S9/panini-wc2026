@@ -199,15 +199,28 @@ def chunked(seq, n):
         yield seq[i:i + n]
 
 
+def _commons_thumb(filename: str, width: int = 600) -> str:
+    """Build a Wikimedia Commons thumbnail URL from a bare filename."""
+    import hashlib as _hl
+    name = filename.replace(" ", "_")
+    md5 = _hl.md5(name.encode()).hexdigest()
+    ext = name.rsplit(".", 1)[-1].lower()
+    # SVG/TIFF thumbnails are served as PNG
+    thumb_name = f"{name}.png" if ext in ("svg", "tif", "tiff") else name
+    return (
+        f"https://upload.wikimedia.org/wikipedia/commons/thumb"
+        f"/{md5[0]}/{md5[:2]}/{name}/{width}px-{thumb_name}"
+    )
+
+
 def fetch_photos_and_qids(titles):
-    """Batched pageimages + wikidata QID lookup. Returns title -> (photo, qid),
-    following redirects."""
+    """Batched pageimages + wikidata QID lookup. Returns title -> (photo, qid)."""
     out = {}
     for batch in chunked(sorted(titles), 50):
         data = api({
             "action": "query", "titles": "|".join(batch), "redirects": "1",
             "prop": "pageimages|pageprops", "piprop": "thumbnail",
-            "pithumbsize": "400", "ppprop": "wikibase_item",
+            "pithumbsize": "600", "ppprop": "wikibase_item",
         })
         redirect_map = {}
         for rd in data.get("query", {}).get("redirects", []):
@@ -226,15 +239,16 @@ def fetch_photos_and_qids(titles):
 
 
 def fetch_body_stats(qids):
-    """Wikidata SPARQL: height (P2048, cm) and mass (P2067, kg) per QID."""
-    out = {}
+    """Wikidata SPARQL: height, mass, and P18 portrait image per QID."""
+    out = {}  # qid -> (height_cm, weight_kg, photo_url)
     for batch in chunked(sorted(qids), 200):
         values = " ".join(f"wd:{q}" for q in batch)
         query = f"""
-        SELECT ?item ?height ?mass WHERE {{
+        SELECT ?item ?height ?mass ?image WHERE {{
           VALUES ?item {{ {values} }}
           OPTIONAL {{ ?item wdt:P2048 ?height. }}
           OPTIONAL {{ ?item wdt:P2067 ?mass. }}
+          OPTIONAL {{ ?item wdt:P18 ?image. }}
         }}"""
         try:
             r = session.get(SPARQL_API, params={"query": query, "format": "json"}, timeout=60)
@@ -243,18 +257,47 @@ def fetch_body_stats(qids):
                 qid = b["item"]["value"].rsplit("/", 1)[-1]
                 h = b.get("height", {}).get("value")
                 m = b.get("mass", {}).get("value")
+                img_url = b.get("image", {}).get("value", "")
                 height_cm = weight_kg = None
+                photo = None
                 if h:
                     hv = float(h)
                     height_cm = round(hv * 100) if hv < 3 else round(hv)
                 if m:
                     weight_kg = round(float(m))
-                prev_h, prev_w = out.get(qid, (None, None))
-                out[qid] = (height_cm or prev_h, weight_kg or prev_w)
+                if img_url:
+                    # img_url is like http://commons.wikimedia.org/wiki/Special:FilePath/Name.jpg
+                    filename = unquote(img_url.rsplit("/", 1)[-1])
+                    photo = _commons_thumb(filename, 600)
+                prev = out.get(qid, (None, None, None))
+                out[qid] = (
+                    height_cm or prev[0],
+                    weight_kg or prev[1],
+                    photo or prev[2],
+                )
         except Exception as e:
             print(f"  sparql batch failed (skipping): {e}", file=sys.stderr)
         time.sleep(0.5)
     return out
+
+
+def search_wiki_photo(name: str) -> str | None:
+    """Fallback: search Wikipedia for a player by name and grab their pageimage."""
+    data = api({
+        "action": "query", "list": "search", "srsearch": name,
+        "srlimit": "1", "srnamespace": "0",
+    })
+    results = (data.get("query") or {}).get("search", [])
+    if not results:
+        return None
+    title = results[0]["title"]
+    data2 = api({
+        "action": "query", "titles": title,
+        "prop": "pageimages", "piprop": "thumbnail", "pithumbsize": "600",
+    })
+    for page in (data2.get("query") or {}).get("pages", []):
+        return (page.get("thumbnail") or {}).get("source")
+    return None
 
 
 def rarity_for(player):
@@ -286,8 +329,8 @@ def main():
     meta = fetch_photos_and_qids(all_titles)
 
     qids = {q for (_, q) in meta.values() if q}
-    print(f"fetching height/weight for {len(qids)} wikidata items…")
-    stats = fetch_body_stats(qids)
+    print(f"fetching height/weight/portraits for {len(qids)} wikidata items…")
+    stats = fetch_body_stats(qids)  # qid -> (height_cm, weight_kg, p18_photo)
 
     stickers = []
     num = 1
@@ -321,8 +364,16 @@ def main():
         })
         num += 1
         for p in players:
-            photo, qid = meta.get(p["wiki_title"], (None, None)) if p["wiki_title"] else (None, None)
-            h, w = stats.get(qid, (None, None)) if qid else (None, None)
+            wiki_photo, qid = meta.get(p["wiki_title"], (None, None)) if p["wiki_title"] else (None, None)
+            h, w, p18_photo = stats.get(qid, (None, None, None)) if qid else (None, None, None)
+            # Prefer P18 Wikidata portrait; fall back to Wikipedia pageimage
+            photo = p18_photo or wiki_photo
+            # Last resort: search Wikipedia by full name if no photo found
+            if not photo and p["wiki_title"]:
+                full_name = f"{p['first']} {p['last']}"
+                photo = search_wiki_photo(full_name)
+                if photo:
+                    print(f"    found via search: {full_name}")
             stickers.append({
                 "sticker_number": num,
                 "player_name": p["first"], "player_lastname": p["last"],
@@ -336,11 +387,12 @@ def main():
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(json.dumps(stickers, ensure_ascii=False, indent=1))
-    n_photos = sum(1 for s in stickers if s["photo_url"])
+    n_photos = sum(1 for s in stickers if s["photo_url"] and not s["is_special"])
+    n_players = sum(1 for s in stickers if not s["is_special"])
     n_legend = sum(1 for s in stickers if s["rarity"] == "legend" and not s["is_special"])
     n_rare = sum(1 for s in stickers if s["rarity"] == "rare")
     print(f"wrote {len(stickers)} stickers to {OUT_PATH}")
-    print(f"  photos: {n_photos}, legends: {n_legend}, rares: {n_rare}")
+    print(f"  photos: {n_photos}/{n_players} ({100*n_photos//max(n_players,1)}%), legends: {n_legend}, rares: {n_rare}")
 
 
 if __name__ == "__main__":
