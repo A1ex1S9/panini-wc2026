@@ -1,74 +1,80 @@
-# Panini WC 2026 — Virtual Sticker Album
+# Panini WC 2026 — Виртуальный альбом наклеек
 
-Full-stack virtual Panini sticker album for the FIFA World Cup 2026:
-**1,313 stickers** with real players from all **48 qualified teams** (scraped
-from Wikipedia), a pack-opening simulator with card-by-card 3D flip reveal,
-album with per-team spreads, and a trading system between users.
+Полноценный виртуальный альбом Panini для FIFA World Cup 2026:
+**1 313 наклеек** с реальными игроками от всех **48 сборных** (данные с Wikipedia),
+симулятор вскрытия пакетиков с анимацией карточек, альбом с разворотами по командам,
+логотипы клубов, фото игроков и система обмена между пользователями.
 
 | | |
 |---|---|
-| Backend | Go 1.25 · Gin · GORM · PostgreSQL · Redis |
-| Frontend | React 19 · TypeScript · Vite · Tailwind CSS 4 · Zustand |
-| Data | Wikipedia squad pages + pageimages API + Wikidata SPARQL |
-| Deploy | GitHub Pages (frontend) · Fly.io (backend) |
+| Бэкенд | Go 1.25 · Gin · GORM · PostgreSQL · Redis |
+| Фронтенд | React 19 · TypeScript · Vite · Tailwind CSS 4 · Zustand |
+| PWA | Устанавливается на iPhone/Android, safe area для Dynamic Island |
+| Данные | Wikipedia squad pages + Wikidata SPARQL (фото P18, логотипы P154) |
+| Деплой | GitHub Pages (фронтенд) · Render.com (бэкенд + PostgreSQL) · Upstash (Redis) |
 
-## Quick start (local)
+## Быстрый старт (локально)
 
 ```bash
-docker compose up -d postgres redis        # postgres on host port 5434
+docker compose up -d postgres redis        # postgres на порту 5434
 
 cd backend
 export DATABASE_URL="postgres://panini:secret@localhost:5434/panini?sslmode=disable"
-go run ./cmd/seed                          # migrations + 1313 stickers
-go run ./cmd/server                        # API on :8080
+go run ./cmd/server                        # миграции + автосид + API на :8080
 
 cd ../frontend
 npm install
-VITE_API_URL=http://localhost:8080 npm run dev   # UI on :5173
+VITE_API_URL=http://localhost:8080 npm run dev   # UI на :5173
 ```
 
-Or run everything in containers: `docker compose up --build`.
+Или всё в контейнерах: `docker compose up --build`.
 
-## Gameplay
+## Геймплей
 
-- **Packs** (`/packs`): 5 packs per 24h cycle, 5 stickers each. Rarity odds:
-  70% common / 25% rare (50+ caps) / 5% legend (Messi, Ronaldo, Mbappé,
-  Yamal, …). Cooldown lives in Redis (`pack_cooldown:{user_id}`, TTL 86400).
-- **Album** (`/album`): 12 groups × 4 teams, team card + player grid per
-  spread, dotted slots for missing stickers, stick/wiggle/fly animations.
-- **Trading** (`/trade`): browse other collectors' duplicates, offer a
-  one-for-one swap. Acceptance runs in a single PostgreSQL transaction with
-  row locks plus a Redis lock per trade — no sticker can be lost or duped.
-- **Leaderboard** (`/`): top collectors by completion %.
+- **Пакетики** (`/packs`): 10 пакетиков каждые 30 минут, 5 наклеек в каждом.
+  Редкость: 70% обычные / 25% редкие (50+ матчей за сборную) / 5% легенды
+  (Месси, Роналду, Мбаппе, Ямаль, Беллингем…). Кулдаун хранится в Redis
+  (`pack_cooldown:{user_id}`, TTL 1800).
+- **Альбом** (`/album`): 12 групп × 4 команды, командная карточка + сетка игроков
+  на каждом развороте, пунктирные слоты для отсутствующих наклеек.
+  На телефоне — нажми карточку внизу, потом нужный слот (вместо drag-and-drop).
+  Нажми на приклеенную карточку — откроется в увеличенном виде.
+- **Инвентарь** (`/inventory`): все наклейки, которые ещё не в альбоме, и дубли.
+- **Обмен** (`/trade`): просматривай дубли других коллекционеров, предлагай
+  обмен один-на-один. Принятие обмена выполняется в одной PostgreSQL-транзакции
+  с блокировками строк и Redis-локом — ни одна наклейка не теряется.
+- **Лидерборд** (`/`): топ коллекционеров по % заполнения альбома.
 
-## Refreshing the dataset
+## Обновление данных
 
 ```bash
-python3 scraper/scrape.py     # → backend/seeddata/stickers.json (cached, 429-aware)
-cd backend && go run ./cmd/seed
+# Обновить фото и данные игроков
+python3 scraper/scrape.py
+
+# Добавить/обновить логотипы клубов
+python3 scraper/scrape_logos.py
+
+# Закоммитить и запушить — Render задеплоит и автоматически обновит БД
+git add backend/seeddata/stickers.json && git push
 ```
 
-The seed upserts on `sticker_number`, so re-running refreshes player data
-without touching user collections. Photos are hotlinked from Wikimedia —
-nothing is self-hosted; a silhouette is rendered when a photo is missing.
+Сидер делает upsert по `sticker_number` при каждом запуске сервера — данные
+обновляются без потери коллекций пользователей. Фото раздаются с Wikimedia Commons,
+при отсутствии — отображается силуэт.
 
-## Deployment
+## Деплой (бесплатно, без карты)
 
-**Backend → Fly.io** (`backend/fly.toml`, app `panini-wc2026-api`, region `fra`):
+**Бэкенд → Render.com** (Blueprint в `render.yaml`, автодеплой при пуше):
 
-```bash
-fly launch --copy-config --no-deploy
-fly secrets set DATABASE_URL=... REDIS_URL=... JWT_SECRET=$(openssl rand -hex 32) \
-  CORS_ORIGINS=https://<username>.github.io
-fly deploy
-fly ssh console -C seed        # one-off: populate stickers
+```
+Render.com → New → Blueprint → указать репозиторий
+Вручную добавить переменную: REDIS_URL=rediss://... (из Upstash)
 ```
 
-**Frontend → GitHub Pages**: push to `main`. The workflow
-(`.github/workflows/deploy.yml`) builds with `BASE_PATH=/<repo>/` and
-publishes `frontend/dist` to the `gh-pages` branch.
+**Фронтенд → GitHub Pages**: пуш в `main` → Actions автоматически собирает
+и публикует `frontend/dist` в ветку `gh-pages`.
 
-Repository secrets required: `FLY_API_TOKEN`, `VITE_API_URL`.
+Секреты репозитория: `RENDER_DEPLOY_HOOK`, `VITE_API_URL`.
 
 ## API
 
@@ -84,9 +90,9 @@ PUT  /api/trades/:id/accept          PUT  /api/trades/:id/decline
 DELETE /api/trades/:id
 ```
 
-All routes except auth and leaderboard require `Authorization: Bearer <JWT>`.
+Все маршруты кроме auth и leaderboard требуют `Authorization: Bearer <JWT>`.
 
 ---
 
-*Fan project. Player data and photos from Wikipedia/Wikimedia Commons.
-Not affiliated with Panini or FIFA.*
+*Фанатский проект. Данные игроков и фото с Wikipedia/Wikimedia Commons.
+Не аффилирован с Panini или FIFA.*
