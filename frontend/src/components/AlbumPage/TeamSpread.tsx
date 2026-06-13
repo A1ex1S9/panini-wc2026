@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import type { AlbumSticker } from '../../types'
 import { StickerCard } from '../StickerCard/StickerCard'
 import { Flag } from '../branding/Flag'
@@ -11,10 +10,10 @@ interface TeamSpreadProps {
   stickers: AlbumSticker[]
   readonly?: boolean
   onStick?: (sticker: AlbumSticker) => void
+  onStuckClick?: (sticker: AlbumSticker) => void
   justStuckId?: string | null
   draggingId?: string | null
   highlightId?: string | null
-  /** mobile tap-to-place: id of the card selected in the bottom bar */
   selectedId?: string | null
   onSlotTap?: (sticker: AlbumSticker) => void
 }
@@ -25,9 +24,8 @@ export function slotDomId(s: { sticker_number: number }) {
 
 export function TeamSpread({
   team, groupName, teamColor, teamCode, stickers, readonly,
-  onStick, justStuckId, draggingId, highlightId, selectedId, onSlotTap,
+  onStick, onStuckClick, justStuckId, draggingId, highlightId, selectedId, onSlotTap,
 }: TeamSpreadProps) {
-  const [wiggleId, setWiggleId] = useState<string | null>(null)
   const teamCard = stickers.find((s) => s.is_special)
   const players = stickers.filter((s) => !s.is_special)
   const stuck = stickers.filter((s) => s.stuck_in_album).length
@@ -35,8 +33,7 @@ export function TeamSpread({
   const handleClick = (s: AlbumSticker) => {
     if (readonly) return
     if (s.stuck_in_album) {
-      setWiggleId(s.id)
-      setTimeout(() => setWiggleId(null), 700)
+      onStuckClick?.(s)
       return
     }
     if (s.quantity > 0) onStick?.(s)
@@ -46,27 +43,13 @@ export function TeamSpread({
     const size = large ? 'normal' : 'mini'
     if (s.stuck_in_album) {
       return (
-        <div className="group relative" key={s.id} id={slotDomId(s)}>
+        <div key={s.id} id={slotDomId(s)}>
           <StickerCard
             sticker={s}
             size={size}
             onClick={() => handleClick(s)}
-            className={`${wiggleId === s.id ? 'wiggle' : ''} ${justStuckId === s.id ? 'fly-to-slot' : ''}`}
+            className={`${justStuckId === s.id ? 'fly-to-slot' : ''} cursor-pointer`}
           />
-          {wiggleId === s.id && (
-            <div className="absolute -top-7 left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-2 py-0.5 text-[10px] font-bold text-white">
-              Уже наклеена!
-            </div>
-          )}
-          {!s.is_special && (
-            <div className="pointer-events-none absolute -top-2 left-1/2 z-30 hidden w-44 -translate-x-1/2 -translate-y-full rounded-lg bg-slate-900/95 p-2 text-[11px] leading-snug text-white shadow-xl group-hover:block">
-              <div className="font-bold">
-                #{s.sticker_number} {s.player_name} {s.player_lastname}
-              </div>
-              <div className="text-white/70">{s.position} · {s.team}</div>
-              {s.club && <div className="text-white/70">{s.club}</div>}
-            </div>
-          )}
         </div>
       )
     }
@@ -142,7 +125,7 @@ export function TeamSpread({
               </span>
             </div>
           )}
-          <div className="grid flex-1 grid-cols-3 gap-1.5 md:grid-cols-4 xl:grid-cols-5">
+          <div className="grid flex-1 grid-cols-3 gap-1.5 md:grid-cols-5 lg:grid-cols-6">
             {players.map((s) => slot(s))}
           </div>
         </div>

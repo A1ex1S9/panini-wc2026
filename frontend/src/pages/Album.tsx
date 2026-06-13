@@ -50,8 +50,8 @@ export default function Album() {
   const [justStuckId, setJustStuckId] = useState<string | null>(null)
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [highlightId, setHighlightId] = useState<string | null>(null)
-  // mobile tap-to-select: id of the card currently selected in hand
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [modalSticker, setModalSticker] = useState<AlbumSticker | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -251,7 +251,8 @@ export default function Album() {
                     <StickerCard
                       sticker={s}
                       size="mini"
-                      className={justStuckId === s.id ? 'fly-to-slot' : ''}
+                      onClick={() => setModalSticker(s)}
+                      className={`cursor-pointer ${justStuckId === s.id ? 'fly-to-slot' : ''}`}
                     />
                   </div>
                 ) : (
@@ -298,6 +299,7 @@ export default function Album() {
             teamCode={t.code}
             stickers={t.stickers}
             onStick={stick}
+            onStuckClick={setModalSticker}
             justStuckId={justStuckId}
             draggingId={draggingId}
             highlightId={highlightId}
@@ -307,6 +309,27 @@ export default function Album() {
         ))}
       </div>
     </div>
+
+    {/* sticker detail modal */}
+    {modalSticker && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+        onClick={() => setModalSticker(null)}
+      >
+        <div
+          className="relative flex flex-col items-center gap-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <StickerCard sticker={modalSticker} size="normal" />
+          <button
+            onClick={() => setModalSticker(null)}
+            className="rounded-full bg-white/20 px-6 py-2 text-sm font-bold text-white hover:bg-white/30"
+          >
+            Закрыть
+          </button>
+        </div>
+      </div>
+    )}
     </>
   )
 }
