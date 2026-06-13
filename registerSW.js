@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/panini-wc2026/sw.js', { scope: '/panini-wc2026/' })})}
