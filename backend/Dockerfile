@@ -12,4 +12,4 @@ FROM alpine:3.20
 RUN apk add --no-cache ca-certificates tzdata
 COPY --from=build /out/server /out/seed /usr/local/bin/
 EXPOSE 8080
-CMD ["sh", "-c", "seed && server"]
+CMD ["server"]

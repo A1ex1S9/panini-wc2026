@@ -13,6 +13,7 @@ import (
 	"panini-wc2026/backend/internal/db"
 	"panini-wc2026/backend/internal/middleware"
 	"panini-wc2026/backend/internal/packs"
+	"panini-wc2026/backend/internal/seeder"
 	"panini-wc2026/backend/internal/trades"
 )
 
@@ -27,6 +28,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("redis: %v", err)
 	}
+
+	seeder.Run(gdb)
 
 	authH := &auth.Handler{DB: gdb, JWTSecret: cfg.JWTSecret}
 	albumH := &album.Handler{DB: gdb}
