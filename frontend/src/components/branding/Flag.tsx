@@ -6,7 +6,8 @@ export function Flag({ code, className = '' }: { code: string; className?: strin
       src={`https://flagcdn.com/w40/${code}.png`}
       srcSet={`https://flagcdn.com/w80/${code}.png 2x`}
       alt={code}
-      loading="lazy"
+      loading="eager"
+      decoding="async"
       className={`object-cover rounded-[2px] shadow-sm ${className}`}
     />
   )

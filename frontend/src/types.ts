@@ -12,6 +12,7 @@ export interface Sticker {
   height_cm: number | null
   weight_kg: number | null
   club: string
+  club_logo_url: string
   photo_url: string
   rarity: 'common' | 'rare' | 'legend'
   is_special: boolean

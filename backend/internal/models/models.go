@@ -29,6 +29,7 @@ type Sticker struct {
 	HeightCM       *int       `json:"height_cm" gorm:"column:height_cm"`
 	WeightKG       *int       `json:"weight_kg" gorm:"column:weight_kg"`
 	Club           string     `json:"club"`
+	ClubLogoURL    string     `json:"club_logo_url"`
 	PhotoURL       string     `json:"photo_url"`
 	Rarity         string     `json:"rarity" gorm:"size:10;default:common"`
 	IsSpecial      bool       `json:"is_special"`

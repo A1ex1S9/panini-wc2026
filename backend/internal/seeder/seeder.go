@@ -25,6 +25,7 @@ type seedSticker struct {
 	HeightCM       *int    `json:"height_cm"`
 	WeightKG       *int    `json:"weight_kg"`
 	Club           string  `json:"club"`
+	ClubLogoURL    string  `json:"club_logo_url"`
 	PhotoURL       string  `json:"photo_url"`
 	Rarity         string  `json:"rarity"`
 	IsSpecial      bool    `json:"is_special"`
@@ -59,6 +60,7 @@ func Run(gdb *gorm.DB) {
 			HeightCM:       s.HeightCM,
 			WeightKG:       s.WeightKG,
 			Club:           s.Club,
+			ClubLogoURL:    s.ClubLogoURL,
 			PhotoURL:       s.PhotoURL,
 			Rarity:         s.Rarity,
 			IsSpecial:      s.IsSpecial,
@@ -76,7 +78,7 @@ func Run(gdb *gorm.DB) {
 		DoUpdates: clause.AssignmentColumns([]string{
 			"player_name", "player_lastname", "position", "team", "team_color",
 			"group_name", "team_code", "dob", "height_cm", "weight_kg", "club",
-			"photo_url", "rarity", "is_special",
+			"club_logo_url", "photo_url", "rarity", "is_special",
 		}),
 	}).CreateInBatches(rows, 200).Error
 	if err != nil {

@@ -38,9 +38,9 @@ function fmtDob(dob: string | null): string {
   if (!dob) return ''
   const d = new Date(dob)
   if (Number.isNaN(d.getTime())) return ''
-  const dd = String(d.getDate())
-  const mm = String(d.getMonth() + 1)
-  return `${dd}-${mm}-${d.getFullYear()}`
+  const dd = String(d.getDate()).padStart(2, '0')
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  return `${dd}.${mm}.${d.getFullYear()}`
 }
 
 function Silhouette({ className = '' }: { className?: string }) {
@@ -243,9 +243,21 @@ export function StickerCard({
                   className="mt-[2%] flex w-[88%] items-center justify-between gap-1 rounded-sm px-[0.6em] py-[0.25em] text-white"
                   style={{ backgroundColor: INK, fontSize: dims.h * 0.034 }}
                 >
-                  <span className="truncate font-bold uppercase tracking-wide">
-                    {sticker.club || sticker.team}
-                  </span>
+                  <div className="flex min-w-0 items-center gap-[0.4em]">
+                    {sticker.club_logo_url && (
+                      <img
+                        src={sticker.club_logo_url}
+                        alt=""
+                        loading="eager"
+                        className="shrink-0 object-contain"
+                        style={{ height: '1em', width: '1em' }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                      />
+                    )}
+                    <span className="truncate font-bold uppercase tracking-wide">
+                      {sticker.club || sticker.team}
+                    </span>
+                  </div>
                   <PaniniLogo style={{ fontSize: dims.h * 0.03 }} />
                 </div>
               </>
