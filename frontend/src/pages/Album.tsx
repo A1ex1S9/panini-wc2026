@@ -320,7 +320,12 @@ export default function Album() {
           className="relative flex flex-col items-center gap-4"
           onClick={(e) => e.stopPropagation()}
         >
-          <StickerCard sticker={modalSticker} size="normal" />
+          <div className="hidden lg:block">
+            <StickerCard sticker={modalSticker} size="large" />
+          </div>
+          <div className="lg:hidden">
+            <StickerCard sticker={modalSticker} size="normal" />
+          </div>
           <button
             onClick={() => setModalSticker(null)}
             className="rounded-full bg-white/20 px-6 py-2 text-sm font-bold text-white hover:bg-white/30"

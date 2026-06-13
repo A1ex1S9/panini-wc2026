@@ -125,7 +125,7 @@ export function TeamSpread({
               </span>
             </div>
           )}
-          <div className="grid flex-1 grid-cols-3 gap-1.5 md:grid-cols-5 lg:grid-cols-6">
+          <div className="grid flex-1 grid-cols-3 gap-1.5 lg:grid-cols-5 xl:grid-cols-6">
             {players.map((s) => slot(s))}
           </div>
         </div>

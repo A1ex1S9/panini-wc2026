@@ -31,14 +31,9 @@ type seedSticker struct {
 	IsSpecial      bool    `json:"is_special"`
 }
 
-// Run upserts all stickers from the embedded JSON. Safe to call on every startup.
+// Run upserts all stickers from the embedded JSON on every startup.
+// OnConflict DoUpdates makes this safe and idempotent.
 func Run(gdb *gorm.DB) {
-	var count int64
-	gdb.Model(&models.Sticker{}).Count(&count)
-	if count > 0 {
-		log.Printf("seeder: %d stickers already present, skipping", count)
-		return
-	}
 
 	var seeds []seedSticker
 	if err := json.Unmarshal(seeddata.StickersJSON, &seeds); err != nil {
