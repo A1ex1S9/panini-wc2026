@@ -8,14 +8,15 @@ interface TeamSpreadProps {
   groupName: string
   teamColor: string
   teamCode: string
-  stickers: AlbumSticker[] // includes the special team card
+  stickers: AlbumSticker[]
   readonly?: boolean
   onStick?: (sticker: AlbumSticker) => void
   justStuckId?: string | null
-  /** sticker id currently being dragged from the side panel */
   draggingId?: string | null
-  /** sticker id whose slot should flash (after clicking a card in the panel) */
   highlightId?: string | null
+  /** mobile tap-to-place: id of the card selected in the bottom bar */
+  selectedId?: string | null
+  onSlotTap?: (sticker: AlbumSticker) => void
 }
 
 export function slotDomId(s: { sticker_number: number }) {
@@ -24,7 +25,7 @@ export function slotDomId(s: { sticker_number: number }) {
 
 export function TeamSpread({
   team, groupName, teamColor, teamCode, stickers, readonly,
-  onStick, justStuckId, draggingId, highlightId,
+  onStick, justStuckId, draggingId, highlightId, selectedId, onSlotTap,
 }: TeamSpreadProps) {
   const [wiggleId, setWiggleId] = useState<string | null>(null)
   const teamCard = stickers.find((s) => s.is_special)
@@ -73,12 +74,17 @@ export function TeamSpread({
     // empty slot: dotted outline + number; drop target while dragging
     const owned = s.quantity > 0
     const isDropTarget = draggingId === s.id
+    const isTapTarget = selectedId === s.id
     const isFlashing = highlightId === s.id
+    const isActive = isDropTarget || isTapTarget || isFlashing
     return (
       <div
         key={s.id}
         id={slotDomId(s)}
-        onClick={() => handleClick(s)}
+        onClick={() => {
+          if (isTapTarget) { onSlotTap?.(s); return }
+          handleClick(s)
+        }}
         onDragOver={(e) => { if (isDropTarget) e.preventDefault() }}
         onDrop={(e) => {
           if (!isDropTarget) return
@@ -86,15 +92,15 @@ export function TeamSpread({
           onStick?.(s)
         }}
         className={`relative flex shrink-0 flex-col items-center justify-center rounded-[4px] border-2 border-dashed transition ${
-          isDropTarget || isFlashing
+          isActive
             ? 'animate-pulse border-emerald-400 bg-emerald-50 ring-4 ring-emerald-300/70'
             : 'bg-white/40'
-        } ${owned && !readonly ? 'cursor-pointer hover:bg-white/80' : ''} ${
+        } ${(owned && !readonly) || isTapTarget ? 'cursor-pointer hover:bg-white/80' : ''} ${
           large ? 'w-[100px] h-[138px] sm:w-[130px] sm:h-[179px] md:w-[160px] md:h-[220px]'
                 : 'w-[60px] h-[82px] sm:w-[70px] sm:h-[96px] md:w-[80px] md:h-[110px]'
         }`}
-        style={{ borderColor: isDropTarget || isFlashing ? undefined : teamColor }}
-        title={owned && !readonly ? 'Наклеить из панели слева' : undefined}
+        style={{ borderColor: isActive ? undefined : teamColor }}
+        title={owned && !readonly ? 'Нажми на карточку внизу, затем сюда' : undefined}
       >
         <span className="font-display text-xs font-black sm:text-base md:text-lg" style={{ color: teamColor }}>
           {s.sticker_number}
@@ -102,7 +108,7 @@ export function TeamSpread({
         <span className="px-0.5 text-center text-[7px] font-semibold text-slate-400 sm:text-[9px]">
           {s.player_lastname}
         </span>
-        {isDropTarget && (
+        {(isDropTarget || isTapTarget) && (
           <span className="absolute bottom-1 rounded bg-emerald-500 px-1 text-[9px] font-black text-white">
             СЮДА!
           </span>
@@ -136,7 +142,7 @@ export function TeamSpread({
               </span>
             </div>
           )}
-          <div className="grid flex-1 grid-cols-4 gap-1.5 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
+          <div className="grid flex-1 grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
             {players.map((s) => slot(s))}
           </div>
         </div>

@@ -238,10 +238,40 @@ def fetch_photos_and_qids(titles):
     return out
 
 
+def sparql(query: str) -> dict:
+    """SPARQL GET with disk cache + Retry-After-aware backoff."""
+    key = hashlib.sha256(query.encode()).hexdigest()
+    cache_file = CACHE_DIR / f"sparql_{key}.json"
+    if cache_file.exists():
+        return json.loads(cache_file.read_text())
+    for attempt in range(8):
+        try:
+            r = session.get(SPARQL_API, params={"query": query, "format": "json"}, timeout=90)
+            if r.status_code == 429:
+                wait = int(r.headers.get("Retry-After", 0) or 0)
+                wait = max(wait, 2 ** attempt, 10)
+                print(f"  sparql rate limited, waiting {wait}s…", file=sys.stderr)
+                time.sleep(wait)
+                continue
+            r.raise_for_status()
+            data = r.json()
+            CACHE_DIR.mkdir(exist_ok=True)
+            cache_file.write_text(json.dumps(data))
+            return data
+        except requests.RequestException as e:
+            if attempt == 7:
+                raise
+            print(f"  sparql retry after error: {e}", file=sys.stderr)
+            time.sleep(2 ** attempt)
+    raise RuntimeError("sparql retries exhausted")
+
+
 def fetch_body_stats(qids):
     """Wikidata SPARQL: height, mass, and P18 portrait image per QID."""
     out = {}  # qid -> (height_cm, weight_kg, photo_url)
-    for batch in chunked(sorted(qids), 200):
+    batches = list(chunked(sorted(qids), 150))
+    for i, batch in enumerate(batches, 1):
+        print(f"  sparql batch {i}/{len(batches)} ({len(batch)} items)…", file=sys.stderr)
         values = " ".join(f"wd:{q}" for q in batch)
         query = f"""
         SELECT ?item ?height ?mass ?image WHERE {{
@@ -251,9 +281,8 @@ def fetch_body_stats(qids):
           OPTIONAL {{ ?item wdt:P18 ?image. }}
         }}"""
         try:
-            r = session.get(SPARQL_API, params={"query": query, "format": "json"}, timeout=60)
-            r.raise_for_status()
-            for b in r.json()["results"]["bindings"]:
+            data = sparql(query)
+            for b in data["results"]["bindings"]:
                 qid = b["item"]["value"].rsplit("/", 1)[-1]
                 h = b.get("height", {}).get("value")
                 m = b.get("mass", {}).get("value")
@@ -266,7 +295,6 @@ def fetch_body_stats(qids):
                 if m:
                     weight_kg = round(float(m))
                 if img_url:
-                    # img_url is like http://commons.wikimedia.org/wiki/Special:FilePath/Name.jpg
                     filename = unquote(img_url.rsplit("/", 1)[-1])
                     photo = _commons_thumb(filename, 600)
                 prev = out.get(qid, (None, None, None))
@@ -276,8 +304,8 @@ def fetch_body_stats(qids):
                     photo or prev[2],
                 )
         except Exception as e:
-            print(f"  sparql batch failed (skipping): {e}", file=sys.stderr)
-        time.sleep(0.5)
+            print(f"  sparql batch {i} failed (skipping): {e}", file=sys.stderr)
+        time.sleep(1)
     return out
 
 

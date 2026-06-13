@@ -41,12 +41,17 @@ export function groupByTeam(stickers: AlbumSticker[]): {
   return { specials, teams }
 }
 
+// true when the primary input is touch (phone/tablet)
+const isTouchDevice = () => typeof window !== 'undefined' && window.matchMedia('(pointer:coarse)').matches
+
 export default function Album() {
   const [stickers, setStickers] = useState<AlbumSticker[]>([])
   const [loading, setLoading] = useState(true)
   const [justStuckId, setJustStuckId] = useState<string | null>(null)
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [highlightId, setHighlightId] = useState<string | null>(null)
+  // mobile tap-to-select: id of the card currently selected in hand
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -83,24 +88,44 @@ export default function Album() {
     }
   }
 
-  // click a card in hand → scroll to its slot and flash it
-  const locateSlot = (s: AlbumSticker) => {
-    setHighlightId(s.id)
-    document.getElementById(slotDomId(s))?.scrollIntoView({
-      behavior: 'smooth', block: 'center',
-    })
-    setTimeout(() => setHighlightId((cur) => (cur === s.id ? null : cur)), 2500)
+  // click a card in hand:
+  // • touch device → select it (highlight slot + remember for tap-to-place)
+  // • desktop → just flash the slot
+  const handleCardClick = (s: AlbumSticker) => {
+    if (isTouchDevice()) {
+      if (selectedId === s.id) {
+        setSelectedId(null)
+        setHighlightId(null)
+      } else {
+        setSelectedId(s.id)
+        setHighlightId(s.id)
+        document.getElementById(slotDomId(s))?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    } else {
+      setHighlightId(s.id)
+      document.getElementById(slotDomId(s))?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setTimeout(() => setHighlightId((cur) => (cur === s.id ? null : cur)), 2500)
+    }
+  }
+
+  // tap on a slot when a card is selected → stick it
+  const handleSlotTap = (s: AlbumSticker) => {
+    if (selectedId === s.id) {
+      stick(s).then(() => setSelectedId(null))
+    }
   }
 
   if (loading) {
     return <p className="py-20 text-center text-slate-400">Загружаем альбом…</p>
   }
 
+  const touch = isTouchDevice()
+
   return (
     <>
     <OrientationBanner />
     <div className="flex gap-5">
-      {/* left panel: my cards waiting to be stuck */}
+      {/* desktop left panel */}
       <aside className="sticky top-16 hidden max-h-[calc(100vh-5rem)] w-[210px] shrink-0 flex-col rounded-xl bg-white p-3 shadow md:flex">
         <div className="mb-1 px-1 font-display text-sm font-black uppercase text-panini-navy">
           Мои наклейки
@@ -134,7 +159,7 @@ export default function Album() {
                     })
                   }}
                   onDragEnd={() => { setDraggingId(null); setHighlightId(null) }}
-                  onClick={() => locateSlot(s)}
+                  onClick={() => handleCardClick(s)}
                   className={draggingId === s.id ? 'opacity-40' : ''}
                 />
                 {s.quantity > 1 && (
@@ -151,8 +176,37 @@ export default function Album() {
         </div>
       </aside>
 
+      {/* mobile bottom bar: scrollable row of hand cards */}
+      {touch && hand.length > 0 && (
+        <div className="fixed bottom-0 inset-x-0 z-40 bg-panini-navy/95 backdrop-blur-sm pb-safe md:hidden"
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
+          <p className="px-3 pt-2 text-[10px] font-semibold text-white/50">
+            {selectedId
+              ? 'Нажми на подсвеченный слот, чтобы наклеить'
+              : `Мои наклейки (${hand.length}) — нажми карточку, потом слот`}
+          </p>
+          <div className="flex gap-2 overflow-x-auto px-3 py-2">
+            {hand.map((s) => (
+              <div key={s.id} className="relative shrink-0">
+                <StickerCard
+                  sticker={s}
+                  size="mini"
+                  onClick={() => handleCardClick(s)}
+                  className={`transition-all ${selectedId === s.id ? 'ring-4 ring-yellow-400 scale-110' : 'opacity-90'}`}
+                />
+                {s.quantity > 1 && (
+                  <span className="absolute -right-1 -top-1 z-10 rounded-full bg-red-600 px-1 text-[9px] font-black text-white">
+                    ×{s.quantity}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* album spreads */}
-      <div className="min-w-0 flex-1 space-y-8">
+      <div className={`min-w-0 flex-1 space-y-8 ${touch && hand.length > 0 ? 'pb-36' : ''}`}>
         {/* team navigator */}
         <nav className="flex flex-wrap gap-1.5 rounded-xl bg-white p-3 shadow">
           <a
@@ -247,6 +301,8 @@ export default function Album() {
             justStuckId={justStuckId}
             draggingId={draggingId}
             highlightId={highlightId}
+            selectedId={selectedId}
+            onSlotTap={handleSlotTap}
           />
         ))}
       </div>
