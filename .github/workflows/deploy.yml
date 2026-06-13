@@ -28,8 +28,7 @@ jobs:
       - name: Build
         working-directory: frontend
         env:
-          # e.g. https://panini-wc2026-api.fly.dev
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://panini-wc2026-api.onrender.com' }}
           BASE_PATH: /${{ github.event.repository.name }}/
         run: npm run build
 

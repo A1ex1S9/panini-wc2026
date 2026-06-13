@@ -14,11 +14,11 @@ services:
           name: panini-wc2026-db
           property: connectionString
       - key: REDIS_URL
-        sync: false          # вставишь вручную из Upstash
+        sync: false
       - key: JWT_SECRET
         generateValue: true  # Render сгенерирует случайную строку
       - key: CORS_ORIGINS
-        sync: false          # вставишь https://<username>.github.io
+        value: https://A1ex1S9.github.io
 
 databases:
   - name: panini-wc2026-db
