@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	PacksPerCycle   = 5
+	PacksPerCycle   = 20
 	StickersPerPack = 5
-	CooldownSeconds = 86400
+	CooldownSeconds = 600 // 10 minutes
 )
 
 type Handler struct {

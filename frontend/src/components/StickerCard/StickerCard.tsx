@@ -178,10 +178,10 @@ export function StickerCard({
           {/* right edge: flag + vertical trigram */}
           <Flag
             code={sticker.team_code}
-            className="absolute right-[5%] top-[30%] w-[15%] min-w-4"
+            className="absolute right-[3%] top-[30%] w-[15%] min-w-4"
           />
           <div
-            className="absolute right-[4.5%] top-[44%] flex flex-col items-center font-display font-black leading-[0.95]"
+            className="absolute right-[2.5%] top-[44%] flex flex-col items-center font-display font-black leading-[0.95]"
             style={{
               fontSize: dims.h * 0.075,
               color: 'transparent',

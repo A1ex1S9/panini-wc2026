@@ -34,8 +34,8 @@ export function Layout() {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-40 bg-panini-navy text-white shadow-lg">
-        <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-2">
-          <Link to="/" className="flex items-center gap-2">
+        <div className="mx-auto flex max-w-6xl items-center gap-3 px-3 py-2 sm:gap-6 sm:px-4">
+          <Link to="/" className="flex shrink-0 items-center gap-2">
             <Wc26Stack className="text-xl" trophy={false} />
             <span className="hidden font-display text-sm font-black uppercase leading-tight sm:block">
               FIFA World Cup 2026™<br />
@@ -43,13 +43,13 @@ export function Layout() {
             </span>
           </Link>
           {token && (
-            <nav className="flex gap-1 text-sm font-semibold">
+            <nav className="flex flex-1 gap-0.5 text-xs font-semibold sm:gap-1 sm:text-sm">
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   className={({ isActive }) =>
-                    `relative rounded px-3 py-1.5 transition ${
+                    `relative rounded px-2 py-1.5 transition sm:px-3 ${
                       isActive ? 'bg-white/20' : 'hover:bg-white/10'
                     }`
                   }
@@ -64,25 +64,25 @@ export function Layout() {
               ))}
             </nav>
           )}
-          <div className="ml-auto flex items-center gap-3 text-sm">
+          <div className="ml-auto flex shrink-0 items-center gap-2 text-xs sm:gap-3 sm:text-sm">
             {token && user ? (
               <>
-                <span className="font-semibold text-white/80">{user.username}</span>
+                <span className="hidden font-semibold text-white/80 sm:block">{user.username}</span>
                 <button
                   onClick={() => { logout(); navigate('/') }}
-                  className="rounded bg-white/10 px-3 py-1.5 font-semibold hover:bg-white/20"
+                  className="rounded bg-white/10 px-2 py-1.5 font-semibold hover:bg-white/20 sm:px-3"
                 >
                   Выйти
                 </button>
               </>
             ) : (
               <>
-                <Link to="/login" className="rounded px-3 py-1.5 font-semibold hover:bg-white/10">
+                <Link to="/login" className="rounded px-2 py-1.5 font-semibold hover:bg-white/10 sm:px-3">
                   Войти
                 </Link>
                 <Link
                   to="/register"
-                  className="rounded bg-panini-coral px-3 py-1.5 font-bold hover:brightness-110"
+                  className="rounded bg-panini-coral px-2 py-1.5 font-bold hover:brightness-110 sm:px-3"
                 >
                   Регистрация
                 </Link>
@@ -91,7 +91,7 @@ export function Layout() {
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-2 py-4 sm:px-4 sm:py-6">
         <Outlet />
       </main>
       <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-400">

@@ -89,18 +89,17 @@ export function TeamSpread({
           isDropTarget || isFlashing
             ? 'animate-pulse border-emerald-400 bg-emerald-50 ring-4 ring-emerald-300/70'
             : 'bg-white/40'
-        } ${owned && !readonly ? 'cursor-pointer hover:bg-white/80' : ''}`}
-        style={{
-          borderColor: isDropTarget || isFlashing ? undefined : teamColor,
-          width: large ? 160 : 80,
-          height: large ? 220 : 110,
-        }}
+        } ${owned && !readonly ? 'cursor-pointer hover:bg-white/80' : ''} ${
+          large ? 'w-[100px] h-[138px] sm:w-[130px] sm:h-[179px] md:w-[160px] md:h-[220px]'
+                : 'w-[60px] h-[82px] sm:w-[70px] sm:h-[96px] md:w-[80px] md:h-[110px]'
+        }`}
+        style={{ borderColor: isDropTarget || isFlashing ? undefined : teamColor }}
         title={owned && !readonly ? 'Наклеить из панели слева' : undefined}
       >
-        <span className="font-display text-lg font-black" style={{ color: teamColor }}>
+        <span className="font-display text-xs font-black sm:text-base md:text-lg" style={{ color: teamColor }}>
           {s.sticker_number}
         </span>
-        <span className="px-1 text-center text-[9px] font-semibold text-slate-400">
+        <span className="px-0.5 text-center text-[7px] font-semibold text-slate-400 sm:text-[9px]">
           {s.player_lastname}
         </span>
         {isDropTarget && (
@@ -137,7 +136,7 @@ export function TeamSpread({
               </span>
             </div>
           )}
-          <div className="grid flex-1 grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+          <div className="grid flex-1 grid-cols-4 gap-1.5 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
             {players.map((s) => slot(s))}
           </div>
         </div>

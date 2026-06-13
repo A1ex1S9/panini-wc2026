@@ -5,6 +5,7 @@ import type { AlbumSticker } from '../types'
 import { TeamSpread, slotDomId } from '../components/AlbumPage/TeamSpread'
 import { StickerCard } from '../components/StickerCard/StickerCard'
 import { Flag } from '../components/branding/Flag'
+import { OrientationBanner } from '../components/OrientationBanner'
 
 export interface TeamGroup {
   team: string
@@ -96,6 +97,8 @@ export default function Album() {
   }
 
   return (
+    <>
+    <OrientationBanner />
     <div className="flex gap-5">
       {/* left panel: my cards waiting to be stuck */}
       <aside className="sticky top-16 hidden max-h-[calc(100vh-5rem)] w-[210px] shrink-0 flex-col rounded-xl bg-white p-3 shadow md:flex">
@@ -248,5 +251,6 @@ export default function Album() {
         ))}
       </div>
     </div>
+    </>
   )
 }
